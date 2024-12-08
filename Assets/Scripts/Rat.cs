@@ -18,24 +18,19 @@ public class Rat : CombatBase
     public GameObject corpsePrefab; 
     private Vector2 movementDirection; 
     private Rigidbody2D rb; 
-    private SpriteRenderer spriteRenderer;
-    private Animator anim;
 
 
     [Header("쥐 상태")]
     private bool isChasing = false; 
     private Transform playerTransform; 
-    private bool isSlowed = false; //피격시 슬로우
+    private bool isSlowed = false; //피격시 슬로우 효과
 
 
     protected override void Start()
     {
         base.Start(); // CombatBase 초기화
         rb = GetComponent<Rigidbody2D>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        anim = GetComponent<Animator>();
 
-        // 방향 변경 루틴 시작
         StartCoroutine(ChangeDirectionRoutine());
     }
 
@@ -55,7 +50,7 @@ public class Rat : CombatBase
 
     private void Move()
     {
-        rb.linearVelocity = movementDirection * (isSlowed ? slowSpeed : moveSpeed); // 속도 감소 여부 확인
+        rb.linearVelocity = movementDirection * (isSlowed ? slowSpeed : moveSpeed); 
     }
 
     private IEnumerator ChangeDirectionRoutine()
@@ -105,7 +100,7 @@ public class Rat : CombatBase
             if (distanceToPlayer <= chaseRange)
             {
                 isChasing = true;
-                StopAllCoroutines(); // 랜덤 이동 중단
+                StopCoroutine(ChangeDirectionRoutine()); // 랜덤 이동 중단
             }
         }
     }
@@ -121,11 +116,14 @@ public class Rat : CombatBase
     public override void TakeDamage(float amount)
     {
         base.TakeDamage(amount);
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
 
         Vector2 reverseDirection = -movementDirection; 
         transform.position += (Vector3)reverseDirection * moveSpeed * Time.deltaTime;
-
-        StartCoroutine(FlashDamage());
+        
         StartCoroutine(ApplySlowEffect());
 
         // 공격받으면 추적 상태로 전환
@@ -141,17 +139,6 @@ public class Rat : CombatBase
         }
     }
 
-    private IEnumerator FlashDamage() 
-    {
-        Color originalColor = spriteRenderer.color;
-
-        spriteRenderer.color = new Color(1f, 0.5f, 0f); 
-
-        yield return new WaitForSeconds(0.2f);
-
-        spriteRenderer.color = originalColor;
-    }
-
     private IEnumerator ApplySlowEffect()
     {
         if (isSlowed) yield break;
@@ -163,7 +150,6 @@ public class Rat : CombatBase
 
     protected override void Die()
     {
-        StopAllCoroutines();
         this.gameObject.SetActive(false);
 
         if (corpsePrefab != null)

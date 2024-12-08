@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections;
+using UnityEngine.Analytics;
 
 public class PlayerCombat : CombatBase
 {
@@ -9,17 +10,15 @@ public class PlayerCombat : CombatBase
 
     [Header("이펙트 프리팹")]
     public GameObject attackEffectPrefab; // 이펙트 프리팹
-
+    
     [HideInInspector]
     public bool isAttacking { get; set; }
-
     private Vector3 initEffectScale, lastEffectScale;//초기 이펙트크기, 사라지기전 이펙트 크기
-    private SpriteRenderer playerRender; // 부모의 SpriteRenderer
 
     protected override void Start()
     {
         base.Start();
-        playerRender = GetComponentInParent<SpriteRenderer>();
+        spriteRenderer = GetComponentInParent<SpriteRenderer>(); // 부모의 SpriteRenderer
         initEffectScale = new Vector3(effectRadius * 2f, effectRadius * 2f, 1f);
         lastEffectScale = new Vector3(effectRadius, effectRadius, 1f);
     }
@@ -65,7 +64,6 @@ public class PlayerCombat : CombatBase
 
         SpriteRenderer spriteRenderer = effect.GetComponent<SpriteRenderer>();
 
-        // 초기 색상과 목표 색상 설정
         Color initialColor = spriteRenderer.color;
         Color targetColor = new Color(initialColor.r, initialColor.g, initialColor.b, 0f); // Alpha 0
 
@@ -118,24 +116,16 @@ public class PlayerCombat : CombatBase
     public override void TakeDamage(float amount)
     {
         base.TakeDamage(amount);
-        StartCoroutine(FlashDamage());
-    }
-
-    private IEnumerator FlashDamage()//데미지를 입었을때 피격 효과
-    {
-        Color originalColor = playerRender.color;
-
-        playerRender.color = new Color(1f, 0.2f, 0f); 
-
-        yield return new WaitForSeconds(0.2f);
-
-        playerRender.color = originalColor;
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
     }
 
     protected override void Die()
     {
-        StopAllCoroutines();
         base.Die();
-        // 추가 효과나 사운드 필요 시 여기에 구현 가능
+        GameManager.instance.GameOver();
+        // 추가 효과나 사운드 나중에 구현
     }
 }

@@ -15,6 +15,7 @@ public class Portal : MonoBehaviour
     public int targetMapIndex;         //맵 bounds 설정
     private CameraController cam;
 
+    private bool isFirst = true;
     [System.Obsolete]
     void Awake()
     {
@@ -23,8 +24,15 @@ public class Portal : MonoBehaviour
     }
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        if(targetMap==null || currentMap == null || targetPortal ==null) return;
-        if (collision.CompareTag("Player"))
+        if(isFirst && targetMap==null || currentMap == null || targetPortal ==null){//보스 포탈에서 save..
+            if(GameManager.instance == null){
+                Debug.Log("Game Manager is null");
+                return;
+            }
+            isFirst = false;
+            GameManager.instance.AddSavePoint(transform);
+        }
+        else if (collision.CompareTag("Player"))
         {
             // 플레이어 위치를 타겟 포탈로 이동
             collision.transform.position = targetPortal.transform.position + (Vector3)exitOffset;

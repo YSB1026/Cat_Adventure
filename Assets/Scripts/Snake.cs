@@ -8,25 +8,42 @@ public class Snake : CombatBase
     public GameObject tailPrefab; // 꼬리 프리팹
     public Transform[] tailSpawnPoints; // 꼬리 스폰 위치
     public CompositeCollider2D mapBoundary; 
-    public float attackIntervalPhase1 = 4.0f; // 1페이즈 공격 간격
-    public float attackIntervalPhase2 = 2.0f; // 2페이즈 공격 간격
+    public float attackIntervalPhase1 = 3.5f; // 1페이즈 공격 간격
+    public float attackIntervalPhase2 = 1.5f; // 2페이즈 공격 간격
     public GameObject corpsePrefab; 
-    private Animator anim; // 애니메이터
     private float nextAttackTime = 0.0f;
     private int attackCount = 0;
     private bool isIdle = true;
     private bool isCoolDown = false;
     private float coolDownDamageTaken = 0f; // CoolDown 상태에서 받은 데미지
     private Transform player; 
-    private SpriteRenderer spriteRenderer;
+    private float HALF_HP;
 
     protected override void Start()
     {
         base.Start();
-        player = GameObject.FindGameObjectWithTag("Player").transform; // 플레이어를 태그로 찾기
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        anim = GetComponent<Animator>(); // 애니메이터 컴포넌트 찾기
+        HALF_HP = maxHealth/2;
+        player = GameObject.FindGameObjectWithTag("Player").transform;
         StartCoroutine(BossAttackRoutine());
+    }
+
+    void Update(){
+        if(GameManager.instance.isGameOver){
+            ResetAll();
+        }
+    }
+
+    void ResetAll(){
+        currentHealth = maxHealth;
+        nextAttackTime = 0.0f;
+        attackCount = 0;
+        isIdle = true;
+        isCoolDown = false;
+        coolDownDamageTaken = 0;
+
+        anim.ResetTrigger("Attack");
+        anim.ResetTrigger("CoolDown");
+        anim.SetBool("isIdle",isIdle);
     }
 
     IEnumerator BossAttackRoutine()
@@ -41,8 +58,9 @@ public class Snake : CombatBase
             {
                 if (mapBoundary.bounds.Contains(player.position))
                 {
+                    yield return new WaitForSeconds(1f);//플레이어가 입장하거나, 그루기 상태가 풀리자마자 공격하는걸 막기위함
                     PerformAttack();
-                    nextAttackTime = Time.time + (currentHealth > 50 ? attackIntervalPhase1 : attackIntervalPhase2);
+                    nextAttackTime = Time.time + (currentHealth > HALF_HP ? attackIntervalPhase1 : attackIntervalPhase2);
                 }
             }
             yield return null;
@@ -58,7 +76,8 @@ public class Snake : CombatBase
         if (attackType == 0)
         {
             anim.SetTrigger("Attack");
-            FireProjectile();
+            int projectileCnt = (currentHealth > HALF_HP) ? 2 : 3;
+            FireProjectile(projectileCnt);
         }
         else if (attackType == 1)
         {
@@ -108,17 +127,34 @@ public class Snake : CombatBase
         anim.SetBool("isIdle", isIdle);
     }
 
-    void FireProjectile()
+   void FireProjectile(int projectileCount)
     {
-        Vector3 firePosition = transform.position + transform.right; // 보스 앞에서 투사체 발사
-        GameObject projectile = Instantiate(projectilePrefab, firePosition, Quaternion.identity);
-        Rigidbody2D rb = projectile.GetComponent<Rigidbody2D>();
-        Vector2 direction = (player.position - firePosition).normalized;
-        rb.linearVelocity = direction * 5.0f; // 투사체 속도 설정
+        Vector3 firePosition = transform.position + transform.right / 2;
+        Vector3 playerPosition = player.position; // 플레이어의 위치
 
-        // 충돌 처리
-        StartCoroutine(CheckCollision(projectile));
+        for (int i = 0; i < projectileCount; i++)
+        {
+            GameObject projectile = Instantiate(projectilePrefab, firePosition, Quaternion.identity);
+            GameManager.instance.AddProjectile(projectile);
+            Rigidbody2D rb = projectile.GetComponent<Rigidbody2D>();
+
+            // 플레이어 방향으로 발사 방향 설정
+            Vector2 direction = (playerPosition - firePosition).normalized;
+
+            // 각 투사체 간의 각도 차이 추가
+            float angleStep = 10f; // 각 투사체 간의 각도 차이
+            float angle = (i - (projectileCount - 1) / 2.0f) * angleStep; // 중심에서 양쪽으로 퍼지도록 계산
+            direction = Quaternion.Euler(0, 0, angle) * direction;
+
+            rb.linearVelocity = direction * 4.5f; // 투사체 속도 설정
+
+            // 충돌 처리
+            StartCoroutine(CheckCollision(projectile));
+        }
     }
+
+
+
 
     IEnumerator CheckCollision(GameObject obj)
     {
@@ -154,7 +190,7 @@ public class Snake : CombatBase
     IEnumerator ShowTailWarningAndActivate()
     {
         int spawnPointIndex = Random.Range(0, tailSpawnPoints.Length);
-        Vector3 tailPosition = tailSpawnPoints[spawnPointIndex].position; // 스폰 포인트 위치 사용
+        Vector3 tailPosition = tailSpawnPoints[spawnPointIndex].position;
 
         // 경고 표시 나중에 구현
         //ShowWarning(tailPosition);
@@ -163,6 +199,7 @@ public class Snake : CombatBase
         yield return new WaitForSeconds(1.0f); // 경고 시간 (1초)
 
         GameObject tail = Instantiate(tailPrefab, tailPosition, Quaternion.identity);
+        GameManager.instance.AddProjectile(tail);
         StartCoroutine(CheckCollision(tail));
         StartCoroutine(RaiseAndLowerTail(tail));
     }
@@ -172,8 +209,8 @@ public class Snake : CombatBase
         Vector3 originalPosition = tail.transform.position;
         Vector3 targetPosition = new Vector3(tail.transform.position.x, tail.transform.position.y + 5.0f, tail.transform.position.z); // +5까지 상승
 
-        float timeSpeed = currentHealth > 50 ? 4.0f : 6.0f;
-        // 상승
+        float timeSpeed = currentHealth > HALF_HP ? 4.0f : 6.0f;
+
         while (tail.transform.position.y < targetPosition.y)
         {
             tail.transform.position = Vector3.MoveTowards(tail.transform.position, targetPosition, Time.deltaTime * timeSpeed); // 상승
@@ -197,36 +234,30 @@ public class Snake : CombatBase
         if (!isCoolDown) return;
 
         coolDownDamageTaken += amount;
-        if (coolDownDamageTaken >= 50f)
+        if (coolDownDamageTaken >= 50)
         {
             isCoolDown = false;
             EndCoolDown();
         }
 
         base.TakeDamage(amount);
-        StartCoroutine(FlashDamage());
-    }
-
-
-    private IEnumerator FlashDamage()
-    {
-        Color originalColor = spriteRenderer.color;
-
-        spriteRenderer.color = new Color(1f, 0f, 0f); 
-
-        yield return new WaitForSeconds(0.2f);
-
-        spriteRenderer.color = originalColor;
+        if (currentHealth <= 0)
+        {
+            Die();
+        }
     }
 
     protected override void Die()
     {
+        Debug.Log("snake die");
+        GameManager.instance.isBossDie = true;
         StopAllCoroutines();
         this.gameObject.SetActive(false);
-        
+        Vector3 temp = transform.position;
+        temp.y -= 0.5f;
         if (corpsePrefab != null)
         {
-            corpsePrefab = Instantiate(corpsePrefab, transform.position, Quaternion.identity);
+            corpsePrefab = Instantiate(corpsePrefab, temp, Quaternion.identity);
         }
     }
 

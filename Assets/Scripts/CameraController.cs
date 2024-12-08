@@ -2,8 +2,8 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    public Transform player;  // 따라갈 플레이어
-    public CompositeCollider2D[] mapBoundaries; // Composite Collider 2D 경계 배열
+    public Transform player;
+    public CompositeCollider2D[] mapBoundaries; // Composite Collider 2D 맵 경계 
     
     [Header("현재 맵 경계")]
     private CompositeCollider2D currentBoundary; // 현재 맵 경계
@@ -41,11 +41,9 @@ public class CameraController : MonoBehaviour
             currentBoundary.bounds.max.y - cameraHalfHeight
         );
 
-        // 카메라 위치 업데이트
         transform.position = new Vector3(clampedX, clampedY, transform.position.z);
     }
 
-    // 맵 이동 시 호출되는 메서드
     public void SwitchBoundary(int mapIndex)
     {
         if (mapIndex < 0 || mapIndex >= mapBoundaries.Length)
