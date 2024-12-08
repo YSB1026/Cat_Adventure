@@ -10,7 +10,8 @@
 
 - 🧑🏻‍💻**사용 기술 스택**
   <br> ![C#](https://img.shields.io/badge/-C%23-239120?style=flat-square&logo=csharp&logoColor=white)
-  <br> ![Unity](https://img.shields.io/badge/-Unity-100000?style=flat-square&logo=unity&logoColor=white)
+  ![Unity](https://img.shields.io/badge/-Unity-100000?style=flat-square&logo=unity&logoColor=white)
+  ![VS Code](https://img.shields.io/badge/-VS%20Code-007ACC?style=flat-square&logo=visualstudiocode&logoColor=white)
 
   
 - **팀원 소개 및 기여(역할)**
@@ -25,3 +26,5 @@
 | **YSB1026** | 유니티 구현 및 스토리 구성  |
 </p>
 <br>
+
+# 기능 소개 - pptx 확인해 보기
