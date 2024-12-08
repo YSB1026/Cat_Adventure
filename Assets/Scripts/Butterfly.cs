@@ -1,6 +1,6 @@
 using UnityEngine;
 using System.Collections;
-
+//깃허브 테스트입니다.
 public class Butterfly : CombatBase
 {
     public float moveSpeed = 2f; // 이동 속도
