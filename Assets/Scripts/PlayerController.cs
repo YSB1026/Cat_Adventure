@@ -145,7 +145,7 @@ public class PlayerController : MonoBehaviour
                 anim.SetBool("isInteracting", false);
             }
         }
-        else if(Input.GetMouseButtonDown(0) && !playerCombat.isAttacking && !interactManager.isTalk){
+        else if(Input.GetMouseButtonDown(0) && !interactManager.isTalk){
             playerCombat.PerformAttack(attackDirection:viewDir);
             Invoke(nameof(EndAttack), 0.5f); // 공격 애니메이션 시간(1초)뒤 isAttacking false;
         }
