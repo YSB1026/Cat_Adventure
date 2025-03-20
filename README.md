@@ -18,8 +18,8 @@
 
   
 - **팀원 소개 및 기여(역할)**
-<a href="https://github.com/YSB1026/LikeLion_TeamProject1/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=YSB1026/LikeLion_TeamProject1" /></a>
+<a href="https://github.com/pastarobber/Maze/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=pastarobber/Maze" style="zoom: 100%;"/></a>
 
 |    팀원    |                      기여                       |
 | :--------: | :---------------------------------------------: |
